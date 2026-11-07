@@ -1,31 +1,31 @@
 # digest-feed
 
-Новостные дайджесты в `issues/YYYY-MM-DD.md`, автоматически пересылаемые в Telegram.
+News digests committed as `issues/YYYY-MM-DD.md`, automatically forwarded to Telegram.
 
-## Как это работает
+## How it works
 
-1. Агент коммитит новый файл `issues/YYYY-MM-DD.md` в ветку `main`.
-2. GitHub Actions (`.github/workflows/telegram.yml`) реагирует на push с изменениями в `issues/**.md`, находит добавленные файлы и для каждого запускает `scripts/send-telegram.mjs`.
-3. Скрипт убирает Markdown-разметку (заголовки, `**bold**`, `__bold__`, `*italic*`, `[текст](url)` → `текст (url)`, пункты списков → `▪️`), при необходимости режет текст на части по границам абзацев (лимит ~4000 символов, с пометкой `(1/N)`) и отправляет через Telegram Bot API `sendMessage` без предпросмотра ссылок.
-4. При ошибке Telegram API (кроме `429 Too Many Requests`, которую скрипт обрабатывает сам с повтором после `retry_after`) workflow завершается с ошибкой.
+1. An agent commits a new `issues/YYYY-MM-DD.md` file to the `main` branch.
+2. GitHub Actions (`.github/workflows/telegram.yml`) reacts to pushes that change `issues/**.md`, finds the added files, and runs `scripts/send-telegram.mjs` for each one.
+3. The script strips Markdown formatting (headings, `**bold**`, `__bold__`, `*italic*`, `[text](url)` → `text (url)`, list items → `▪️`), splits the text into paragraph-aligned chunks if it exceeds ~4000 characters (tagged `(1/N)`), and sends it via the Telegram Bot API `sendMessage` with link previews disabled.
+4. If the Telegram API returns an error (other than `429 Too Many Requests`, which the script retries automatically after `retry_after`), the workflow fails.
 
-## Нужные секреты репозитория
+## Required repository secrets
 
-В **Settings → Secrets and variables → Actions** должны быть добавлены:
+Add these under **Settings → Secrets and variables → Actions**:
 
-- `TELEGRAM_BOT_TOKEN` — токен бота от [@BotFather](https://t.me/BotFather).
-- `TELEGRAM_CHAT_ID` — ID чата/пользователя, которому слать сообщения.
+- `TELEGRAM_BOT_TOKEN` — bot token from [@BotFather](https://t.me/BotFather).
+- `TELEGRAM_CHAT_ID` — ID of the chat/user to send messages to.
 
-Токен и chat_id никогда не попадают в код репозитория и не печатаются в логах.
+The token and chat ID never end up in the repository code and are never printed in logs.
 
-## Ручной запуск
+## Manual run
 
-В **Actions → Send digest to Telegram → Run workflow**:
+Via **Actions → Send digest to Telegram → Run workflow**:
 
-- без параметров — отправит самый свежий файл в `issues/`;
-- с параметром `file` — отправит указанный файл, например `issues/2026-10-30.md`.
+- with no parameters — sends the newest file in `issues/`;
+- with the `file` parameter — sends the specified file, e.g. `issues/2026-10-30.md`.
 
-Либо через GitHub CLI:
+Or via GitHub CLI:
 
 ```bash
 gh workflow run telegram.yml -f file=issues/2026-10-30.md
